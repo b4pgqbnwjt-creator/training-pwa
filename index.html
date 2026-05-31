@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Training">
+<meta name="theme-color" content="#0a0a0f">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-apple.png">
+<title>Red Isle Relay</title>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --bg2: #111118;
+    --bg3: #1a1a24;
+    --bg4: #22222f;
+    --border: rgba(255,255,255,0.07);
+    --accent: #e8ff3c;
+    --accent2: #00d4ff;
+    --accent3: #ff6b35;
+    --accent4: #a855f7;
+    --text: #f0f0f5;
+    --text2: #8888a0;
+    --text3: #555568;
+    --easy: #22c55e;
+    --tempo: #f59e0b;
+    --intervals: #ef4444;
+    --rest: #6366f1;
+    --race: #e8ff3c;
+    --radius: 14px;
+    --radius-sm: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif; overflow: hidden; }
+  body { display: flex; flex-direction: column; max-width: 420px; margin: 0 auto; }
+
+  /* HEADER */
+  .header {
+    padding: calc(env(safe-area-inset-top, 20px) + 12px) 20px 14px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    z-index: 10;
+  }
+  .header-top { display: flex; justify-content: space-between; align-items: flex-start; }
+  .header-left {}
+  .race-label { font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text3); margin-bottom: 2px; }
+  .header-title { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; color: var(--text); line-height: 1; }
+  .header-title span { color: var(--accent); }
+  .countdown-block { text-align: right; }
+  .countdown-num { font-size: 30px; font-weight: 900; letter-spacing: -0.04em; color: var(--accent); line-height: 1; font-variant-numeric: tabular-nums; }
+  .countdown-label { font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text3); margin-top: 1px; }
+  .header-sub { margin-top: 10px; display: flex; align-items: center; gap: 8px; }
+  .today-date { font-size: 13px; color: var(--text2); font-weight: 500; }
+  .week-badge { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; background: var(--bg3); border: 1px solid var(--border); border-radius: 20px; padding: 2px 9px; color: var(--text2); }
+
+  /* TABS */
+  .tabs {
+    display: flex;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    padding: 0 4px;
+    gap: 0;
+  }
+  .tab {
+    flex: 1;
+    padding: 11px 4px 10px;
+    background: none;
+    border: none;
+    color: var(--text3);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: color 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    position: relative;
+  }
+  .tab .tab-icon { font-size: 17px; line-height: 1; }
+  .tab.active { color: var(--accent); }
+  .tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 10%; right: 10%;
+    height: 2px;
+    background: var(--accent);
+    border-radius: 2px 2px 0 0;
+  }
+
+  /* CONTENT */
+  .content {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: calc(env(safe-area-inset-bottom, 20px) + 20px);
+  }
+  .tab-panel { display: none; padding: 18px 16px; gap: 14px; flex-direction: column; }
+  .tab-panel.active { display: flex; }
+
+  /* CARDS */
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .card-header {
+    padding: 12px 16px 10px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .card-title { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text3); }
+  .card-body { padding: 14px 16px; }
+
+  /* SESSION HERO */
+  .session-hero {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    position: relative;
+  }
+  .session-type-bar { height: 4px; }
+  .session-type-bar.easy { background: linear-gradient(90deg, var(--easy), #16a34a); }
+  .session-type-bar.tempo { background: linear-gradient(90deg, var(--tempo), #d97706); }
+  .session-type-bar.intervals { background: linear-gradient(90deg, var(--intervals), #dc2626); }
+  .session-type-bar.rest { background: linear-gradient(90deg, var(--rest), #4f46e5); }
+  .session-type-bar.race { background: linear-gradient(90deg, var(--accent), #ffd700); }
+  .session-type-bar.sharpener { background: linear-gradient(90deg, var(--accent2), #0284c7); }
+  .session-type-bar.progression { background: linear-gradient(90deg, #f97316, #dc2626); }
+  .session-type-bar.timetrial { background: linear-gradient(90deg, #ec4899, #8b5cf6); }
+  .session-type-bar.activation { background: linear-gradient(90deg, var(--easy), var(--accent2)); }
+
+  .session-inner { padding: 18px 18px 16px; }
+  .session-type-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .session-type-dot { width: 7px; height: 7px; border-radius: 50%; }
+  .dot-easy { background: var(--easy); }
+  .dot-tempo { background: var(--tempo); }
+  .dot-intervals { background: var(--intervals); }
+  .dot-rest { background: var(--rest); }
+  .dot-race { background: var(--accent); }
+  .dot-sharpener { background: var(--accent2); }
+  .dot-progression { background: #f97316; }
+  .dot-timetrial { background: #ec4899; }
+  .dot-activation { background: var(--easy); }
+
+  .color-easy { color: var(--easy); }
+  .color-tempo { color: var(--tempo); }
+  .color-intervals { color: var(--intervals); }
+  .color-rest { color: var(--rest); }
+  .color-race { color: var(--accent); }
+  .color-sharpener { color: var(--accent2); }
+  .color-progression { color: #f97316; }
+  .color-timetrial { color: #ec4899; }
+  .color-activation { color: var(--easy); }
+
+  .session-name { font-size: 26px; font-weight: 900; letter-spacing: -0.03em; line-height: 1.1; color: var(--text); margin-bottom: 14px; }
+  .session-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .stat-box { background: var(--bg3); border-radius: var(--radius-sm); padding: 10px 12px; }
+  .stat-box.full { grid-column: 1 / -1; }
+  .stat-label { font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text3); margin-bottom: 4px; }
+  .stat-value { font-size: 18px; font-weight: 800; letter-spacing: -0.02em; color: var(--text); }
+  .stat-value.accent { color: var(--accent); }
+  .stat-sub { font-size: 11px; color: var(--text2); margin-top: 2px; }
+
+  /* WORKOUT STEPS */
+  .workout-steps { display: flex; flex-direction: column; gap: 0; }
+  .step {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .step:last-child { border-bottom: none; padding-bottom: 0; }
+  .step-num {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text2);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .step-text { font-size: 14px; color: var(--text); line-height: 1.5; }
+  .step-text strong { color: var(--accent); font-weight: 700; }
+
+  /* WEEK PROGRESS */
+  .week-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+  .week-day { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .week-day-label { font-size: 10px; font-weight: 600; color: var(--text3); text-transform: uppercase; }
+  .week-day-dot {
+    width: 100%;
+    height: 5px;
+    border-radius: 3px;
+    background: var(--bg4);
+    transition: background 0.3s;
+  }
+  .week-day-dot.done { background: var(--easy); }
+  .week-day-dot.today { background: var(--accent); }
+  .week-day-dot.rest-dot { background: var(--rest); opacity: 0.5; }
+  .week-day-dot.upcoming { background: var(--bg4); }
+  .week-day-km { font-size: 10px; color: var(--text3); font-weight: 600; }
+  .week-day.is-today .week-day-label { color: var(--accent); }
+  .week-day.is-today .week-day-km { color: var(--accent); }
+
+  /* STRAVA BUTTON */
+  .strava-btn {
+    width: 100%;
+    padding: 14px 18px;
+    background: #fc4c02;
+    border: none;
+    border-radius: var(--radius-sm);
+    color: white;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: opacity 0.2s;
+  }
+  .strava-btn:active { opacity: 0.8; }
+  .strava-output {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    font-size: 13px;
+    color: var(--text2);
+    line-height: 1.6;
+    white-space: pre-wrap;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    display: none;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  .copy-btn {
+    width: 100%;
+    padding: 11px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text2);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: none;
+    transition: border-color 0.2s, color 0.2s;
+  }
+  .copy-btn.copied { border-color: var(--easy); color: var(--easy); }
+  .copy-btn:active { opacity: 0.8; }
+
+  /* NUTRITION */
+  .macro-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 0; }
+  .macro-box { background: var(--bg3); border-radius: var(--radius-sm); padding: 12px 10px; text-align: center; }
+  .macro-icon { font-size: 18px; margin-bottom: 5px; }
+  .macro-value { font-size: 20px; font-weight: 800; letter-spacing: -0.02em; color: var(--text); }
+  .macro-unit { font-size: 11px; color: var(--text3); font-weight: 600; }
+  .macro-label { font-size: 10px; color: var(--text2); margin-top: 2px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; }
+
+  .timing-list { display: flex; flex-direction: column; gap: 0; }
+  .timing-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 11px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .timing-item:last-child { border-bottom: none; }
+  .timing-time {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent2);
+    letter-spacing: 0.04em;
+    min-width: 70px;
+    padding-top: 1px;
+  }
+  .timing-desc { font-size: 13px; color: var(--text); line-height: 1.5; }
+  .timing-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
+
+  /* SLEEP */
+  .sleep-target { text-align: center; padding: 20px; }
+  .sleep-hours { font-size: 56px; font-weight: 900; letter-spacing: -0.04em; color: var(--accent); line-height: 1; }
+  .sleep-hours-label { font-size: 13px; color: var(--text2); margin-top: 4px; font-weight: 500; }
+  .sleep-window { font-size: 16px; font-weight: 700; color: var(--text); margin-top: 10px; }
+
+  /* CHECKLIST */
+  .checklist { display: flex; flex-direction: column; gap: 0; }
+  .check-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  .check-item:last-child { border-bottom: none; }
+  .check-box {
+    width: 22px; height: 22px;
+    border-radius: 6px;
+    border: 2px solid var(--bg4);
+    background: var(--bg3);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1px;
+    transition: background 0.2s, border-color 0.2s;
+  }
+  .check-box.checked {
+    background: var(--easy);
+    border-color: var(--easy);
+  }
+  .check-box.checked::after {
+    content: '';
+    width: 12px; height: 8px;
+    border-left: 2.5px solid white;
+    border-bottom: 2.5px solid white;
+    transform: rotate(-45deg) translateY(-1px);
+    display: block;
+  }
+  .check-text { flex: 1; }
+  .check-name { font-size: 14px; font-weight: 600; color: var(--text); line-height: 1.3; }
+  .check-name.checked-text { color: var(--text3); text-decoration: line-through; }
+  .check-sub { font-size: 12px; color: var(--text2); margin-top: 3px; line-height: 1.4; }
+  .check-timing { font-size: 11px; font-weight: 700; color: var(--accent2); margin-top: 3px; letter-spacing: 0.04em; }
+
+  /* SUPPLEMENT specific */
+  .supp-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 13px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .supp-row:last-child { border-bottom: none; }
+  .supp-check {
+    width: 24px; height: 24px;
+    border-radius: 7px;
+    border: 2px solid var(--bg4);
+    background: var(--bg3);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+  }
+  .supp-check.checked { background: var(--easy); border-color: var(--easy); }
+  .supp-check.checked::after {
+    content: '';
+    width: 13px; height: 9px;
+    border-left: 2.5px solid white;
+    border-bottom: 2.5px solid white;
+    transform: rotate(-45deg) translateY(-1px);
+    display: block;
+  }
+  .supp-info { flex: 1; min-width: 0; }
+  .supp-name { font-size: 14px; font-weight: 600; color: var(--text); }
+  .supp-name.checked-text { color: var(--text3); text-decoration: line-through; }
+  .supp-dose { font-size: 12px; color: var(--text2); }
+  .supp-when { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; color: var(--accent2); margin-top: 2px; }
+  .supp-when.warning { color: var(--accent3); }
+
+  /* REST DAY */
+  .rest-hero { text-align: center; padding: 30px 20px; }
+  .rest-emoji { font-size: 56px; margin-bottom: 12px; }
+  .rest-title { font-size: 28px; font-weight: 900; letter-spacing: -0.02em; color: var(--rest); margin-bottom: 8px; }
+  .rest-sub { font-size: 15px; color: var(--text2); line-height: 1.5; }
+
+  /* RACE DAY */
+  .race-hero { text-align: center; padding: 24px 20px; }
+  .race-emoji { font-size: 52px; margin-bottom: 10px; }
+  .race-title { font-size: 30px; font-weight: 900; letter-spacing: -0.03em; color: var(--accent); margin-bottom: 6px; }
+  .race-sub { font-size: 14px; color: var(--text2); line-height: 1.5; }
+
+  /* PILL TAGS */
+  .pill { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+  .pill-easy { background: rgba(34,197,94,0.15); color: var(--easy); }
+  .pill-tempo { background: rgba(245,158,11,0.15); color: var(--tempo); }
+  .pill-intervals { background: rgba(239,68,68,0.15); color: var(--intervals); }
+  .pill-rest { background: rgba(99,102,241,0.15); color: var(--rest); }
+  .pill-race { background: rgba(232,255,60,0.15); color: var(--accent); }
+  .pill-sharpener { background: rgba(0,212,255,0.15); color: var(--accent2); }
+  .pill-progression { background: rgba(249,115,22,0.15); color: #f97316; }
+  .pill-timetrial { background: rgba(236,72,153,0.15); color: #ec4899; }
+  .pill-activation { background: rgba(34,197,94,0.15); color: var(--easy); }
+
+  /* INFO ROW */
+  .info-row { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--border); }
+  .info-row:last-child { border-bottom: none; }
+  .info-key { font-size: 13px; color: var(--text2); font-weight: 500; }
+  .info-val { font-size: 13px; color: var(--text); font-weight: 700; text-align: right; max-width: 60%; }
+
+  /* DIVIDER */
+  .divider { height: 1px; background: var(--border); margin: 4px 0; }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: calc(env(safe-area-inset-bottom, 20px) + 80px);
+    left: 50%; transform: translateX(-50%);
+    background: var(--easy);
+    color: #000;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 10px 20px;
+    border-radius: 20px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 100;
+  }
+  .toast.show { opacity: 1; }
+
+  /* SCROLLBAR */
+  .content::-webkit-scrollbar { display: none; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div class="header-left">
+      <div class="race-label">Red Isle Relay</div>
+      <div class="header-title">Training <span>Hub</span></div>
+    </div>
+    <div class="countdown-block">
+      <div class="countdown-num" id="countdownNum">—</div>
+      <div class="countdown-label">days to race</div>
+    </div>
+  </div>
+  <div class="header-sub">
+    <div class="today-date" id="todayDate">—</div>
+    <div class="week-badge" id="weekBadge">Week 1</div>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" data-tab="training" onclick="switchTab('training')">
+    <span class="tab-icon">🏃</span>Train
+  </button>
+  <button class="tab" data-tab="nutrition" onclick="switchTab('nutrition')">
+    <span class="tab-icon">🥗</span>Fuel
+  </button>
+  <button class="tab" data-tab="sleep" onclick="switchTab('sleep')">
+    <span class="tab-icon">😴</span>Sleep
+  </button>
+  <button class="tab" data-tab="supps" onclick="switchTab('supps')">
+    <span class="tab-icon">💊</span>Supps
+  </button>
+</div>
+
+<div class="content">
+
+  <!-- TRAINING TAB -->
+  <div class="tab-panel active" id="tab-training">
+    <div class="session-hero" id="sessionHero"><!-- filled by JS --></div>
+    <div class="card" id="workoutCard" style="display:none">
+      <div class="card-header"><span class="card-title">Workout Breakdown</span></div>
+      <div class="card-body">
+        <div class="workout-steps" id="workoutSteps"></div>
+      </div>
+    </div>
+    <div class="card" id="weekProgressCard">
+      <div class="card-header"><span class="card-title">This Week</span></div>
+      <div class="card-body">
+        <div class="week-grid" id="weekGrid"></div>
+      </div>
+    </div>
+    <div class="card" id="stravaCard">
+      <div class="card-header"><span class="card-title">Strava Description</span></div>
+      <div class="card-body" style="display:flex;flex-direction:column;gap:10px;">
+        <button class="strava-btn" onclick="generateStrava()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066l-2.084 4.116z"/><path d="M11.094 13.828l2.089 4.116 2.087-4.116H18.3L13.183 3.772 8.062 13.828h3.032z" opacity=".4"/></svg>
+          Generate Strava Description
+        </button>
+        <div class="strava-output" id="stravaOutput"></div>
+        <button class="copy-btn" id="copyBtn" onclick="copyStrava()">📋 Copy to Clipboard</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- NUTRITION TAB -->
+  <div class="tab-panel" id="tab-nutrition">
+    <div class="card">
+      <div class="card-header"><span class="card-title">Today's Targets</span></div>
+      <div class="card-body">
+        <div class="macro-row" id="macroRow"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">Meal Timing</span></div>
+      <div class="card-body">
+        <div class="timing-list" id="timingList"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">Key Guidelines</span></div>
+      <div class="card-body">
+        <div id="nutritionTips"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLEEP TAB -->
+  <div class="tab-panel" id="tab-sleep">
+    <div class="card">
+      <div class="card-header"><span class="card-title">Tonight's Target</span></div>
+      <div class="card-body">
+        <div class="sleep-target">
+          <div class="sleep-hours" id="sleepHours">8.5</div>
+          <div class="sleep-hours-label">hours minimum</div>
+          <div class="sleep-window" id="sleepWindow">10:30 PM → 7:00 AM</div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">Sleep Protocol</span></div>
+      <div class="card-body">
+        <div class="checklist" id="sleepChecklist"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">Recovery Notes</span></div>
+      <div class="card-body">
+        <div id="sleepNotes"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUPPLEMENTS TAB -->
+  <div class="tab-panel" id="tab-supps">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Daily Checklist</span>
+        <span style="font-size:12px;color:var(--text3)" id="suppProgress">0 / 6</span>
+      </div>
+      <div class="card-body">
+        <div id="suppList"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">Timing Notes</span></div>
+      <div class="card-body">
+        <div id="suppNotes"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── TRAINING SCHEDULE ────────────────────────────────────────────────────────
+const SCHEDULE = {
+  '2026-05-26': { name: 'Rest Day', type: 'rest', km: 0, pace: null, week: 1,
+    notes: 'Full recovery. Hydrate well, prioritise sleep tonight.' },
+  '2026-05-27': { name: 'Tempo Run', type: 'tempo', km: 12, pace: '4:25–4:30/km', week: 1,
+    notes: '3×10 min at threshold. Keep recovery jogs truly easy.',
+    steps: ['2km easy warmup at 5:45/km', '10 min at 4:25–4:30/km', '3 min easy jog recovery', '10 min at 4:25–4:30/km', '3 min easy jog recovery', '10 min at 4:25–4:30/km', '2km easy cooldown at 5:45/km'] },
+  '2026-05-28': { name: 'Easy Run', type: 'easy', km: 10, pace: '5:30–6:00/km', week: 1,
+    notes: 'Truly conversational effort. Focus on form, not pace.' },
+  '2026-05-29': { name: 'Intervals', type: 'intervals', km: 12, pace: '4:00–4:05/km', week: 1,
+    notes: '6×1km reps. 90 sec standing rest between reps. First two should feel controlled.',
+    steps: ['2km easy warmup at 5:45/km', '1km at 4:00–4:05/km', '90 sec rest', '1km at 4:00–4:05/km', '90 sec rest', '1km at 4:00–4:05/km', '90 sec rest', '1km at 4:00–4:05/km', '90 sec rest', '1km at 4:00–4:05/km', '90 sec rest', '1km at 4:00–4:05/km', '2km easy cooldown at 5:45/km'] },
+  '2026-05-30': { name: 'Easy Run', type: 'easy', km: 8, pace: '5:30–6:00/km', week: 1,
+    notes: 'Active recovery run. Legs may be heavy from Thursday — that\'s fine.' },
+  '2026-05-31': { name: 'Easy Run', type: 'easy', km: 8, pace: '5:30–6:00/km', week: 1,
+    notes: 'Build aerobic base. Stay relaxed, no pace pressure.' },
+  '2026-06-01': { name: 'Long Run', type: 'easy', km: 16, pace: '5:30/km → 4:20/km', week: 1,
+    notes: 'Last 4km negative split at race effort. Don\'t start the push too early.',
+    steps: ['12km easy at 5:30–5:50/km', '4km at 4:20/km (race effort finish)'] },
+
+  '2026-06-02': { name: 'Rest Day', type: 'rest', km: 0, pace: null, week: 2,
+    notes: 'Rest after long run day. Light stretching OK, no cardio.' },
+  '2026-06-03': { name: 'Tempo Run', type: 'tempo', km: 14, pace: '4:25/km', week: 2,
+    notes: '4×12 min blocks. Longer efforts this week — lock in that rhythm early.',
+    steps: ['2km easy warmup at 5:45/km', '12 min at 4:25/km', '2 min easy jog recovery', '12 min at 4:25/km', '2 min easy jog recovery', '12 min at 4:25/km', '2 min easy jog recovery', '12 min at 4:25/km', '2km easy cooldown at 5:45/km'] },
+  '2026-06-04': { name: 'Easy Run', type: 'easy', km: 10, pace: '5:30–6:00/km', week: 2,
+    notes: 'Recovery from tempo. Stay truly easy, heart rate below 145.' },
+  '2026-06-05': { name: 'Intervals', type: 'intervals', km: 13, pace: '4:00/km', week: 2,
+    notes: '7×1km. Extra rep this week — hit the first 5 at 4:00, last 2 if legs feel good.',
+    steps: ['2km easy warmup at 5:45/km', '1km at 4:00/km', '90 sec rest', '1km at 4:00/km', '90 sec rest', '1km at 4:00/km', '90 sec rest', '1km at 4:00/km', '90 sec rest', '1km at 4:00/km', '90 sec rest', '1km at 4:00/km', '90 sec rest', '1km at 4:00/km', '2km easy cooldown at 5:45/km'] },
+  '2026-06-06': { name: 'Easy Run', type: 'easy', km: 8, pace: '5:30–6:00/km', week: 2,
+    notes: 'Flush those interval legs. This run earns tomorrow\'s quality.' },
+  '2026-06-07': { name: 'Progression Run', type: 'progression', km: 10, pace: '5:30 → 4:20/km', week: 2,
+    notes: 'Teach your body to run faster when tired. Hit the last 2km strong.',
+    steps: ['5km easy at 5:30–5:50/km', '3km at 4:40/km (comfortably hard)', '2km at 4:20/km (race effort)'] },
+  '2026-06-08': { name: 'Long Run', type: 'easy', km: 16, pace: '5:30/km → 4:20/km', week: 2,
+    notes: 'Last 5km at race pace. This is the hardest long run of the block — execute it.',
+    steps: ['11km easy at 5:30–5:50/km', '5km at 4:20/km (race effort finish)'] },
+
+  '2026-06-09': { name: 'Rest Day', type: 'rest', km: 0, pace: null, week: 3,
+    notes: 'Peak week starts here. Rest hard today — quality of recovery = quality of training.' },
+  '2026-06-10': { name: 'Tempo Run', type: 'tempo', km: 14, pace: '4:25/km', week: 3,
+    notes: '2×20 min — this is race-fitness defining. Hit 4:25 from minute one.',
+    steps: ['2km easy warmup at 5:45/km', '20 min at 4:25/km', '3 min easy jog recovery', '20 min at 4:25/km', '2km easy cooldown at 5:45/km'] },
+  '2026-06-11': { name: 'Easy Run', type: 'easy', km: 10, pace: '5:30–6:00/km', week: 3,
+    notes: 'Critical recovery run between two hard sessions.' },
+  '2026-06-12': { name: 'Intervals', type: 'intervals', km: 13, pace: '3:55–4:00/km', week: 3,
+    notes: 'Fastest reps of the block. 6×1km sharpens top-end speed. Don\'t go out too hot.',
+    steps: ['2km easy warmup at 5:45/km', '1km at 3:55–4:00/km', '90 sec rest', '1km at 3:55–4:00/km', '90 sec rest', '1km at 3:55–4:00/km', '90 sec rest', '1km at 3:55–4:00/km', '90 sec rest', '1km at 3:55–4:00/km', '90 sec rest', '1km at 3:55–4:00/km', '2km easy cooldown at 5:45/km'] },
+  '2026-06-13': { name: 'Easy Run', type: 'easy', km: 8, pace: '5:30–6:00/km', week: 3,
+    notes: 'Two days to time trial. Keep it genuinely easy — you\'re banking fitness, not spending it.' },
+  '2026-06-14': { name: '10km Time Trial', type: 'timetrial', km: 13, pace: 'All out', week: 3,
+    notes: 'Target sub-43:30 (4:21/km avg). 13km total with warmup/cooldown. Treat this like race day.',
+    steps: ['1.5km easy warmup', '3×100m strides with 60 sec rest', '10km all-out time trial (target: sub-43:30)', '1.5km easy cooldown'] },
+  '2026-06-15': { name: 'Easy Shakeout', type: 'easy', km: 8, pace: '6:00+/km', week: 3,
+    notes: 'Flush the time trial. Go by feel, ignore pace, stop if you want to.' },
+
+  '2026-06-16': { name: 'Rest Day', type: 'rest', km: 0, pace: null, week: 4,
+    notes: 'Taper begins. The work is done — now absorb it. Trust the process.' },
+  '2026-06-17': { name: 'Sharpener', type: 'sharpener', km: 12, pace: '4:05 / 3:55/km', week: 4,
+    notes: 'Short sharp reps to stay tuned. Don\'t go deeper than prescribed.',
+    steps: ['2km easy warmup at 5:45/km', '1km at 4:05/km', '90 sec rest', '1km at 4:05/km', '90 sec rest', '1km at 4:05/km', '90 sec rest', '1km at 4:05/km', '2 min rest', '400m at 3:55/km', '90 sec rest', '400m at 3:55/km', '90 sec rest', '400m at 3:55/km', '90 sec rest', '400m at 3:55/km', '2km easy cooldown at 5:45/km'] },
+  '2026-06-18': { name: 'Easy Run', type: 'easy', km: 8, pace: '5:30–6:00/km', week: 4,
+    notes: 'Taper run. Legs should feel fresh — let them.' },
+  '2026-06-19': { name: 'Easy Run', type: 'easy', km: 6, pace: '5:30–6:00/km', week: 4,
+    notes: 'Short and controlled. Last real training before race week.' },
+  '2026-06-20': { name: 'Pre-Race Activation', type: 'activation', km: 5, pace: 'Easy + strides', week: 4,
+    notes: 'Strides at race pace to wake up fast-twitch fibres. Don\'t overdo it.',
+    steps: ['3km easy at 5:45/km', '5×20 sec strides at 4:20/km (race pace) with 60 sec walk rest'] },
+  '2026-06-21': { name: 'Rest Day', type: 'rest', km: 0, pace: null, week: 4,
+    notes: 'Travel and prep day. Pack race gear tonight. Sleep by 10 PM.' },
+  '2026-06-22': { name: 'RACE DAY', type: 'race', km: 21, pace: '4:20/km', week: 4,
+    notes: '🏁 Red Isle Relay — 21km leg, goal time 1:31:00. You\'re ready. Race your race.',
+    steps: ['2hr before: light carb-rich breakfast', '90 min before: final gear check', '60 min before: 2km easy warmup jog', '30 min before: 4×100m strides', 'Race: first 5km controlled at 4:25/km', 'Mid-race: settle into 4:20/km rhythm', 'Last 2km: everything you have left'] },
+};
+
+// ─── DATE UTILITIES ──────────────────────────────────────────────────────────
+function toDateKey(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+
+function today() {
+  return new Date();
+}
+
+function getSession(dateKey) {
+  return SCHEDULE[dateKey] || null;
+}
+
+function getDaysToRace() {
+  const now = new Date();
+  const race = new Date('2026-06-22');
+  now.setHours(0,0,0,0);
+  race.setHours(0,0,0,0);
+  const diff = Math.round((race - now) / 86400000);
+  return diff;
+}
+
+function formatDate(d) {
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${days[d.getDay()]}, ${months[d.getMonth()]} ${d.getDate()}`;
+}
+
+// ─── WEEK CALCULATION ─────────────────────────────────────────────────────────
+function getWeekDays(week) {
+  const weekStarts = {
+    1: '2026-05-26',
+    2: '2026-06-02',
+    3: '2026-06-09',
+    4: '2026-06-16',
+  };
+  const start = new Date(weekStarts[week] + 'T00:00:00');
+  const days = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(start);
+    d.setDate(d.getDate() + i);
+    days.push(d);
+  }
+  return days;
+}
+
+// ─── STORAGE ─────────────────────────────────────────────────────────────────
+const STORE_KEY = 'relay-training-v1';
+
+function loadStore() {
+  try { return JSON.parse(localStorage.getItem(STORE_KEY) || '{}'); } catch { return {}; }
+}
+
+function saveStore(data) {
+  localStorage.setItem(STORE_KEY, JSON.stringify(data));
+}
+
+function getTodayStore(dateKey) {
+  const store = loadStore();
+  if (!store[dateKey]) store[dateKey] = {};
+  return store[dateKey];
+}
+
+function setTodayStore(dateKey, data) {
+  const store = loadStore();
+  store[dateKey] = data;
+  saveStore(store);
+}
+
+// ─── SUPPLEMENT CONFIG ────────────────────────────────────────────────────────
+function getSupplements(isTrainingDay) {
+  return [
+    {
+      id: 'collagen',
+      name: 'Collagen',
+      dose: '15g',
+      when: isTrainingDay ? '45–60 min pre-run' : 'Morning (with breakfast)',
+      note: 'Take with Vitamin C for enhanced absorption',
+    },
+    {
+      id: 'vitc',
+      name: 'Vitamin C',
+      dose: '1000mg',
+      when: isTrainingDay ? '45–60 min pre-run' : 'Morning (same time as collagen)',
+      note: 'Enhances collagen synthesis',
+    },
+    {
+      id: 'creatine',
+      name: 'Creatine',
+      dose: '5g',
+      when: isTrainingDay ? 'Post-run (with meal)' : 'Morning (with breakfast)',
+      note: isTrainingDay ? 'Post-exercise timing maximises uptake' : null,
+      warning: false,
+    },
+    {
+      id: 'magnesium',
+      name: 'Magnesium Glycinate',
+      dose: '400mg',
+      when: 'Before bed',
+      note: 'Do not take with Zinc — they compete for absorption',
+      warning: true,
+    },
+    {
+      id: 'vitd',
+      name: 'Vitamin D',
+      dose: '2000 IU',
+      when: 'With any meal',
+      note: 'Fat-soluble — must be taken with food',
+    },
+    {
+      id: 'zinc',
+      name: 'Zinc',
+      dose: '25mg',
+      when: 'With a meal (not at bedtime)',
+      note: 'Separate from Magnesium by several hours',
+      warning: true,
+    },
+  ];
+}
+
+// ─── RENDER: SESSION HERO ─────────────────────────────────────────────────────
+function renderSession(dateKey) {
+  const session = getSession(dateKey);
+  const hero = document.getElementById('sessionHero');
+  const workoutCard = document.getElementById('workoutCard');
+  const workoutSteps = document.getElementById('workoutSteps');
+
+  if (!session) {
+    hero.innerHTML = `<div class="session-type-bar rest"></div>
+      <div class="session-inner">
+        <div class="rest-hero">
+          <div class="rest-emoji">📅</div>
+          <div class="rest-title">No Session</div>
+          <div class="rest-sub">This date isn't in the training plan. Check back during the 4-week block (May 26 – June 22).</div>
+        </div>
+      </div>`;
+    workoutCard.style.display = 'none';
+    return;
+  }
+
+  if (session.type === 'rest') {
+    const isRacePrep = dateKey === '2026-06-21';
+    hero.innerHTML = `<div class="session-type-bar rest"></div>
+      <div class="session-inner">
+        <div class="rest-hero">
+          <div class="rest-emoji">${isRacePrep ? '🧳' : '💤'}</div>
+          <div class="rest-title">${isRacePrep ? 'Race Prep Day' : 'Rest Day'}</div>
+          <div class="rest-sub">${session.notes}</div>
+        </div>
+      </div>`;
+    workoutCard.style.display = 'none';
+    return;
+  }
+
+  if (session.type === 'race') {
+    hero.innerHTML = `<div class="session-type-bar race"></div>
+      <div class="session-inner">
+        <div class="race-hero">
+          <div class="race-emoji">🏁</div>
+          <div class="race-title">RACE DAY</div>
+          <div class="race-sub">Red Isle Relay · 21km · Goal: 1:31:00</div>
+        </div>
+        <div class="session-stats">
+          <div class="stat-box">
+            <div class="stat-label">Distance</div>
+            <div class="stat-value accent">21km</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Target Pace</div>
+            <div class="stat-value accent">4:20/km</div>
+          </div>
+          <div class="stat-box full">
+            <div class="stat-label">Goal Time</div>
+            <div class="stat-value" style="font-size:28px">1:31:00</div>
+          </div>
+        </div>
+      </div>`;
+  } else {
+    const typeLabels = {
+      easy: 'Easy Run', tempo: 'Tempo Run', intervals: 'Intervals',
+      sharpener: 'Sharpener', progression: 'Progression', timetrial: 'Time Trial',
+      activation: 'Activation'
+    };
+    const label = typeLabels[session.type] || session.type;
+    hero.innerHTML = `<div class="session-type-bar ${session.type}"></div>
+      <div class="session-inner">
+        <div class="session-type-label">
+          <span class="session-type-dot dot-${session.type}"></span>
+          <span class="color-${session.type}">${label}</span>
+        </div>
+        <div class="session-name">${session.name}</div>
+        <div class="session-stats">
+          <div class="stat-box">
+            <div class="stat-label">Distance</div>
+            <div class="stat-value">${session.km}km</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Target Pace</div>
+            <div class="stat-value" style="font-size:${session.pace && session.pace.length > 10 ? '14' : '18'}px">${session.pace || '—'}</div>
+          </div>
+          <div class="stat-box full">
+            <div class="stat-label">Key Note</div>
+            <div class="stat-sub" style="font-size:13px;color:var(--text)">${session.notes}</div>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  // Workout steps
+  if (session.steps && session.steps.length) {
+    workoutCard.style.display = 'block';
+    workoutSteps.innerHTML = session.steps.map((s, i) => {
+      const isKey = s.includes('/km') || s.includes('min at') || s.includes('all-out') || s.includes('Race:') || s.includes('race');
+      const text = isKey ? s.replace(/([\d:]+\/km|sub-[\d:]+|[\d:]+:[:\d]+)/g, '<strong>$1</strong>') : s;
+      return `<div class="step"><div class="step-num">${i+1}</div><div class="step-text">${text}</div></div>`;
+    }).join('');
+  } else {
+    workoutCard.style.display = 'none';
+  }
+}
+
+// ─── RENDER: WEEK PROGRESS ────────────────────────────────────────────────────
+function renderWeekProgress(session, dateKey) {
+  const week = session ? session.week : 1;
+  const weekDays = getWeekDays(week);
+  const todayKey = dateKey;
+  const grid = document.getElementById('weekGrid');
+  const dayLabels = ['M','T','W','T','F','S','S'];
+  const todayDate = new Date();
+  todayDate.setHours(0,0,0,0);
+
+  grid.innerHTML = weekDays.map((d, i) => {
+    const key = toDateKey(d);
+    const s = SCHEDULE[key];
+    const km = s ? s.km : 0;
+    d.setHours(0,0,0,0);
+    const isToday = key === todayKey;
+    const isPast = d < todayDate;
+    const isRestDay = s && s.type === 'rest';
+    let dotClass = 'upcoming';
+    if (isToday) dotClass = 'today';
+    else if (isPast && !isRestDay) dotClass = 'done';
+    else if (isRestDay) dotClass = 'rest-dot';
+    return `<div class="week-day ${isToday ? 'is-today' : ''}">
+      <div class="week-day-label">${dayLabels[i]}</div>
+      <div class="week-day-dot ${dotClass}"></div>
+      <div class="week-day-km">${km > 0 ? km+'k' : '–'}</div>
+    </div>`;
+  }).join('');
+}
+
+// ─── RENDER: NUTRITION ────────────────────────────────────────────────────────
+function renderNutrition(session) {
+  const isRest = !session || session.type === 'rest';
+  const isRace = session && session.type === 'race';
+  const km = session ? session.km : 0;
+  const carbs = isRest ? 280 : isRace ? 420 : Math.round(250 + km * 8);
+  const protein = isRest ? 160 : Math.round(170 + km * 2);
+  const water = isRest ? 2.5 : isRace ? 4.5 : (2.5 + km * 0.1).toFixed(1);
+
+  document.getElementById('macroRow').innerHTML = `
+    <div class="macro-box">
+      <div class="macro-icon">🌾</div>
+      <div class="macro-value">${carbs}</div>
+      <div class="macro-unit">g</div>
+      <div class="macro-label">Carbs</div>
+    </div>
+    <div class="macro-box">
+      <div class="macro-icon">🥩</div>
+      <div class="macro-value">${protein}</div>
+      <div class="macro-unit">g</div>
+      <div class="macro-label">Protein</div>
+    </div>
+    <div class="macro-box">
+      <div class="macro-icon">💧</div>
+      <div class="macro-value">${water}</div>
+      <div class="macro-unit">L</div>
+      <div class="macro-label">Water</div>
+    </div>`;
+
+  let timings = [];
+  if (isRace) {
+    timings = [
+      { time: '2hr before', desc: 'Pre-race meal', sub: 'Oats + banana + honey. Low fibre, easy to digest.' },
+      { time: '90 min', desc: 'Final hydration', sub: '500ml water with electrolytes (pinch of salt).' },
+      { time: '30 min', desc: 'Energy gel', sub: '1 gel (22g carbs). Practice one you\'ve used in training.' },
+      { time: 'During', desc: 'On-course fuel', sub: 'Gel every 5-6km if offered. Sip water at each station.' },
+      { time: 'Post-race', desc: 'Recovery meal', sub: '50g+ protein + carbs within 30 min of finishing.' },
+    ];
+  } else if (isRest) {
+    timings = [
+      { time: 'Breakfast', desc: 'Moderate carbs + protein', sub: 'Eggs on toast, or oats with Greek yoghurt.' },
+      { time: 'Lunch', desc: 'Balanced plate', sub: '⅓ protein, ⅓ veg, ⅓ carbs. No need to load on rest days.' },
+      { time: 'Dinner', desc: 'Higher protein focus', sub: 'Lean protein (chicken/fish) + vegetables. Moderate starch.' },
+      { time: 'Snacks', desc: 'Light and whole-food', sub: 'Fruit, nuts, Greek yoghurt — avoid processed snacks.' },
+    ];
+  } else {
+    const isAM = ['tempo','intervals','sharpener','timetrial','activation'].includes(session?.type);
+    timings = [
+      { time: '2hr pre-run', desc: 'Pre-run meal', sub: 'Oats or toast with banana. Low fat, low fibre.' },
+      { time: '30 min pre', desc: 'Optional top-up', sub: '1 banana or energy gel if run > 10km.' },
+      { time: 'During (if >75 min)', desc: 'Mid-run fuel', sub: '1 gel per 45 min. Start early — don\'t wait until depleted.' },
+      { time: 'Within 30 min', desc: 'Recovery window', sub: '20–30g protein + 60–80g carbs immediately post-run.' },
+      { time: 'Evening', desc: 'Dinner', sub: 'Carb-rich to top up glycogen for tomorrow.' },
+    ];
+  }
+
+  document.getElementById('timingList').innerHTML = timings.map(t => `
+    <div class="timing-item">
+      <div class="timing-time">${t.time}</div>
+      <div>
+        <div class="timing-desc">${t.desc}</div>
+        <div class="timing-sub">${t.sub}</div>
+      </div>
+    </div>`).join('');
+
+  const tips = isRace ?
+    '<div class="info-row"><div class="info-key">Carb loading</div><div class="info-val">Done the 3 days prior</div></div><div class="info-row"><div class="info-key">Caffeine</div><div class="info-val">150mg 60 min pre-race</div></div><div class="info-row"><div class="info-key">Sodium</div><div class="info-val">Electrolyte tabs, not just water</div></div>' :
+    isRest ?
+    '<div class="info-row"><div class="info-key">Focus</div><div class="info-val">Protein synthesis</div></div><div class="info-row"><div class="info-key">Alcohol</div><div class="info-val">Avoid — disrupts recovery</div></div><div class="info-row"><div class="info-key">Anti-inflammatory</div><div class="info-val">Tart cherry or turmeric</div></div>' :
+    '<div class="info-row"><div class="info-key">Carb source</div><div class="info-val">Rice, oats, banana, potato</div></div><div class="info-row"><div class="info-key">Pre-run caffeine</div><div class="info-val">100–150mg, 45 min before</div></div><div class="info-row"><div class="info-key">Avoid pre-run</div><div class="info-val">High fat, high fibre</div></div>';
+  document.getElementById('nutritionTips').innerHTML = tips;
+}
+
+// ─── RENDER: SLEEP ────────────────────────────────────────────────────────────
+function renderSleep(session, dateKey) {
+  const isRest = !session || session.type === 'rest';
+  const isRace = session && session.type === 'race';
+  const isHard = session && ['tempo','intervals','timetrial','sharpener'].includes(session.type);
+  const hours = isRace ? '9' : isHard ? '8.5' : '8';
+  const window = isRace ? '10:00 PM → 7:00 AM' : isHard ? '10:30 PM → 7:00 AM' : '11:00 PM → 7:00 AM';
+
+  document.getElementById('sleepHours').textContent = hours;
+  document.getElementById('sleepWindow').textContent = window;
+
+  const store = getTodayStore(dateKey);
+  const sleepChecks = store.sleep || {};
+
+  const protocols = [
+    { id: 'screens', name: 'No screens', sub: '60 min before bed — blue light suppresses melatonin by up to 3 hours' },
+    { id: 'caffeine', name: 'Caffeine cutoff', sub: 'Last caffeine by 1–2 PM. Half-life is 6–8 hours' },
+    { id: 'temp', name: 'Room temp 16–18°C', sub: 'Core body temp must drop to initiate deep sleep' },
+    { id: 'dark', name: 'Full blackout', sub: 'Eye mask or blackout blinds — even small light cues reduce melatonin' },
+    { id: 'consistent', name: 'Consistent wake time', sub: 'Same time every day anchors your circadian rhythm' },
+    { id: 'wind', name: 'Wind-down routine', sub: '20 min: light reading, stretching, or breathing exercises' },
+  ];
+
+  document.getElementById('sleepChecklist').innerHTML = protocols.map(p => {
+    const checked = sleepChecks[p.id];
+    return `<div class="check-item" onclick="toggleSleepCheck('${dateKey}','${p.id}')">
+      <div class="check-box ${checked ? 'checked' : ''}"></div>
+      <div class="check-text">
+        <div class="check-name ${checked ? 'checked-text' : ''}">${p.name}</div>
+        <div class="check-sub">${p.sub}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const notes = isRace ?
+    '<div class="info-row"><div class="info-key">Pre-race anxiety</div><div class="info-val">Normal — don\'t stress about sleep</div></div><div class="info-row"><div class="info-key">2 nights before</div><div class="info-val">The sleep that matters most</div></div><div class="info-row"><div class="info-key">Nap if needed</div><div class="info-val">20 min max before 3 PM</div></div>' :
+    isHard ?
+    '<div class="info-row"><div class="info-key">HGH peaks</div><div class="info-val">First 2 hrs of sleep (slow-wave)</div></div><div class="info-row"><div class="info-key">Muscle repair</div><div class="info-val">Primarily during REM cycles 3–4</div></div><div class="info-row"><div class="info-key">Magnesium timing</div><div class="info-val">400mg 45 min before bed</div></div>' :
+    '<div class="info-row"><div class="info-key">Recovery quality</div><div class="info-val">Sleep > nutrition on rest days</div></div><div class="info-row"><div class="info-key">HRV</div><div class="info-val">Check in morning — guides tomorrow</div></div><div class="info-row"><div class="info-key">Nap</div><div class="info-val">20 min before 3 PM if needed</div></div>';
+  document.getElementById('sleepNotes').innerHTML = notes;
+}
+
+function toggleSleepCheck(dateKey, id) {
+  const store = getTodayStore(dateKey);
+  if (!store.sleep) store.sleep = {};
+  store.sleep[id] = !store.sleep[id];
+  setTodayStore(dateKey, store);
+  renderSleep(getSession(dateKey), dateKey);
+}
+
+// ─── RENDER: SUPPLEMENTS ──────────────────────────────────────────────────────
+function renderSupplements(session, dateKey) {
+  const isTraining = session && session.type !== 'rest';
+  const supps = getSupplements(isTraining);
+  const store = getTodayStore(dateKey);
+  const suppChecks = store.supps || {};
+  const checked = supps.filter(s => suppChecks[s.id]).length;
+
+  document.getElementById('suppProgress').textContent = `${checked} / ${supps.length}`;
+
+  document.getElementById('suppList').innerHTML = supps.map(s => {
+    const isChecked = suppChecks[s.id];
+    return `<div class="supp-row" onclick="toggleSupp('${dateKey}','${s.id}')">
+      <div class="supp-check ${isChecked ? 'checked' : ''}"></div>
+      <div class="supp-info">
+        <div class="supp-name ${isChecked ? 'checked-text' : ''}">${s.name} <span style="font-weight:400;color:var(--text2)">${s.dose}</span></div>
+        <div class="supp-when ${s.warning ? 'warning' : ''}">${s.when}</div>
+        ${s.note ? `<div class="supp-dose">${s.note}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+
+  const notes = `
+    <div class="info-row"><div class="info-key">Collagen + Vit C</div><div class="info-val">Always together</div></div>
+    <div class="info-row"><div class="info-key">Magnesium + Zinc</div><div class="info-val">⚠️ Never together</div></div>
+    <div class="info-row"><div class="info-key">Vitamin D</div><div class="info-val">With fat-containing meal</div></div>
+    <div class="info-row"><div class="info-key">Creatine</div><div class="info-val">Consistency > timing</div></div>`;
+  document.getElementById('suppNotes').innerHTML = notes;
+}
+
+function toggleSupp(dateKey, id) {
+  const store = getTodayStore(dateKey);
+  if (!store.supps) store.supps = {};
+  store.supps[id] = !store.supps[id];
+  setTodayStore(dateKey, store);
+  renderSupplements(getSession(dateKey), dateKey);
+}
+
+// ─── STRAVA GENERATOR ─────────────────────────────────────────────────────────
+function generateStrava() {
+  const dateKey = toDateKey(today());
+  const session = getSession(dateKey);
+  if (!session || session.type === 'rest') {
+    showToast('No run today — rest day!');
+    return;
+  }
+  const typeEmojis = { easy:'🟢', tempo:'🟡', intervals:'🔴', sharpener:'🔵', progression:'🟠', timetrial:'🩷', activation:'🟢', race:'🏁' };
+  const emoji = typeEmojis[session.type] || '🏃';
+  const weekLabel = `Week ${session.week}${session.week === 4 ? ' (Taper)' : ''}`;
+  let stepsText = '';
+  if (session.steps) {
+    stepsText = '\n\nSESSION BREAKDOWN:\n' + session.steps.map((s,i) => `${i+1}. ${s}`).join('\n');
+  }
+  const raceDate = new Date('2026-06-22');
+  const todayDate = new Date(); todayDate.setHours(0,0,0,0); raceDate.setHours(0,0,0,0);
+  const daysOut = Math.round((raceDate - todayDate) / 86400000);
+  const desc = `${emoji} ${session.name.toUpperCase()} — ${weekLabel} | Red Isle Relay Prep
+
+📍 ${session.km > 0 ? session.km + 'km' : 'Rest'} ${session.pace ? '@ ' + session.pace : ''}
+${session.notes}${stepsText}
+
+🏁 Red Isle Relay: ${daysOut} day${daysOut !== 1 ? 's' : ''} to go
+Target: 21km @ 4:20/km · Goal time: 1:31:00
+
+#running #relayrace #traininglog #redisleRelay`;
+
+  const output = document.getElementById('stravaOutput');
+  const copyBtn = document.getElementById('copyBtn');
+  output.textContent = desc;
+  output.style.display = 'block';
+  copyBtn.style.display = 'block';
+  copyBtn.classList.remove('copied');
+  copyBtn.textContent = '📋 Copy to Clipboard';
+}
+
+function copyStrava() {
+  const text = document.getElementById('stravaOutput').textContent;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('copyBtn');
+      btn.textContent = '✅ Copied!';
+      btn.classList.add('copied');
+      showToast('Copied to clipboard!');
+    });
+  } else {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast('Copied!');
+  }
+}
+
+// ─── TAB SWITCHING ────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === 'tab-' + tab));
+  document.querySelector('.content').scrollTop = 0;
+}
+
+// ─── TOAST ────────────────────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+function init() {
+  const now = today();
+  const dateKey = toDateKey(now);
+  const session = getSession(dateKey);
+
+  // Header
+  document.getElementById('countdownNum').textContent = Math.max(0, getDaysToRace());
+  document.getElementById('todayDate').textContent = formatDate(now);
+  document.getElementById('weekBadge').textContent = session ? `Week ${session.week}${session.week === 4 ? ' · Taper' : ''}` : 'Off-Plan';
+
+  // Render all tabs
+  renderSession(dateKey);
+  renderWeekProgress(session, dateKey);
+  renderNutrition(session);
+  renderSleep(session, dateKey);
+  renderSupplements(session, dateKey);
+}
+
+// ─── SERVICE WORKER ───────────────────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+
+init();
+</script>
+</body>
+</html>
