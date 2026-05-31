@@ -673,11 +673,11 @@ function getSession(dateKey) {
 
 function getDaysToRace() {
   const now = new Date();
-  const race = new Date('2026-06-22');
+  const race = new Date(2026, 5, 22); // local timezone — month is 0-indexed
   now.setHours(0,0,0,0);
   race.setHours(0,0,0,0);
   const diff = Math.round((race - now) / 86400000);
-  return diff;
+  return Math.max(0, diff);
 }
 
 function formatDate(d) {
@@ -885,7 +885,7 @@ function renderWeekProgress(session, dateKey) {
   const weekDays = getWeekDays(week);
   const todayKey = dateKey;
   const grid = document.getElementById('weekGrid');
-  const dayLabels = ['M','T','W','T','F','S','S'];
+  const dayLetters = ['S','M','T','W','T','F','S']; // indexed by getDay() — 0=Sun
   const todayDate = new Date();
   todayDate.setHours(0,0,0,0);
 
@@ -902,7 +902,7 @@ function renderWeekProgress(session, dateKey) {
     else if (isPast && !isRestDay) dotClass = 'done';
     else if (isRestDay) dotClass = 'rest-dot';
     return `<div class="week-day ${isToday ? 'is-today' : ''}">
-      <div class="week-day-label">${dayLabels[i]}</div>
+      <div class="week-day-label">${dayLetters[d.getDay()]}</div>
       <div class="week-day-dot ${dotClass}"></div>
       <div class="week-day-km">${km > 0 ? km+'k' : '–'}</div>
     </div>`;
